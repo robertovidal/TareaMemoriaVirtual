@@ -1,22 +1,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
+
+int cantidadDigitos (int n) {
+    int r = 1;
+    while (n > 9) {
+        n /= 10;
+        r++;
+    }
+    return r;
+}
 
 int main(int argc, const char *argv[]){
     if(argc != 2){
         printf("Se necesita el numero de direcciones\n");
         return -1;
     }
-    int limite = 16777215;
+    int tamannoBytes = 24;
+    int limite = 0;
+    for(int i =0; i < tamannoBytes; i++){
+        limite += pow(2, i);
+    }
+    printf("%d\n", limite);
     FILE *fp;
     fp = fopen ("dirs.bin", "w");
     int cantidad = atoi(argv[1]);
     srand(time(0));
-    int n = rand() % (limite + 1);
-    fprintf(fp, "%d", n);
-    for(int i = 0; i< cantidad-1;i++){
-        n = rand() % (limite + 1);
-        fprintf(fp, "\n%d", n);
+    int n;
+    int sumaTamanno = 0;
+    int cantDigitos;
+    int limiteDigitos = cantidadDigitos(limite);
+    while(sumaTamanno < cantidad){
+        if(cantidad - sumaTamanno <= limiteDigitos){
+            for(int i = 0; i < cantidad - sumaTamanno; i++){
+                n = rand() % 10;
+                fprintf(fp, "%d", n);
+            }
+            sumaTamanno = cantidad;
+        }
+        else{
+            n = rand() % (limite + 1);
+            cantDigitos = cantidadDigitos(n);
+            fprintf(fp, "%d\n", n);
+            sumaTamanno += cantDigitos + 1;
+        }
     }
     fclose(fp);
 }
