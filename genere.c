@@ -3,6 +3,9 @@
 #include <time.h>
 #include <math.h>
 
+// Jose Pablo Fernández Cubillo
+// Roberto Vidal Patiño
+
 int cantidadDigitos (int n) {
     int r = 1;
     while (n > 9) {

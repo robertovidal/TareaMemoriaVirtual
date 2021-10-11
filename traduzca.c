@@ -7,6 +7,9 @@
 #include <string.h>
 #include <math.h>
 
+// Jose Pablo Fernández Cubillo
+// Roberto Vidal Patiño
+
 struct estructuraTLB{
     int logica;
     int fisica;
