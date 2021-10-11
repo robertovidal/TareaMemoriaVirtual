@@ -14,7 +14,7 @@ int cantidadDigitos (int n) {
 
 int main(int argc, const char *argv[]){
     if(argc != 2){
-        printf("Se necesita el numero de direcciones\n");
+        printf("Se necesita el número como argumento\n");
         return -1;
     }
     int tamannoBytes = 24;
