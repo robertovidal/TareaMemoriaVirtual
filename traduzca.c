@@ -29,8 +29,8 @@ void falloDePagina(const char *nArchivo, int paginaFisica, int paginaLogica, int
     FILE *archivo = fopen(nArchivo,"rb");
 
     if (archivo == NULL){
-        printf("No se pudo abrir %s\n", nArchivo); 
-        return;
+        printf("No se pudo abrir %s\n", nArchivo);
+        exit(1);
     }
 
     if (fseek(archivo, tamPagina*paginaLogica, SEEK_SET) != 0){
@@ -93,78 +93,81 @@ int main(int argc, const char *argv[]){
         return -1;
     }
 
-    int totalDirecciones = 0;
-    int direccionLogica = 0;
-    int paginaLogica = 0;
-    int direccionFisica = 0;
-    int offset = 0;
-    signed char valor = 0;
-    int paginaFisica = 0;
-    int tlbHits = 0;
-    int fallosDePagina = 0;
-    int paginaLibre = 0;
-
-    int mascaraOffset = 0;
-    int mascaraDireccion = 0;
-
-    tamPagina = (int)pow(2,k);
-    tamTablaPaginas = pow(2,m);
-    tamTlb = pow(2,l);
-    tablaPaginas = malloc(tamTablaPaginas * sizeof(int));
-    tlb = malloc(tamTlb * sizeof(struct estructuraTLB));
-    memoriaFisica = malloc(tamTablaPaginas * tamPagina * sizeof(int));
-
-    for (int i = 0; i < tamTablaPaginas; i++) {
-        tablaPaginas[i] = -1;
-    }
-
-    for(int i = 0; i < k; i++){
-        mascaraOffset |= 1 << i;
-    }
-
-    for(int i = 0; i < m; i++){
-        mascaraDireccion |= 1 << i;
-    }
-
     FILE* direcciones = fopen(argv[1], "rb");
+    if(direcciones != NULL){
+        int totalDirecciones = 0;
+        int direccionLogica = 0;
+        int paginaLogica = 0;
+        int direccionFisica = 0;
+        int offset = 0;
+        signed char valor = 0;
+        int paginaFisica = 0;
+        int tlbHits = 0;
+        int fallosDePagina = 0;
+        int paginaLibre = 0;
 
-    char dir[256];
-    while (fgets(dir, 256, direcciones)) {
-        totalDirecciones++;
-        direccionLogica = atoi(dir);
-        offset = direccionLogica & mascaraOffset;
-        paginaLogica = (direccionLogica >> k) & mascaraDireccion;
-        
-        paginaFisica = buscaEnTlb(paginaLogica);
+        int mascaraOffset = 0;
+        int mascaraDireccion = 0;
 
-        if(paginaFisica == -1){
-            paginaFisica = tablaPaginas[paginaLogica];
-            
-            if (paginaFisica == -1) {
-                fallosDePagina++;
-                
-                paginaFisica = paginaLibre;
-                paginaLibre++;
-                falloDePagina(argv[2], paginaFisica, paginaLogica, offset);
-            }
-            
-            meteEnTlb(paginaLogica, paginaFisica);
-        } else {
-            tlbHits++;
+        tamPagina = (int)pow(2,k);
+        tamTablaPaginas = pow(2,m);
+        tamTlb = pow(2,l);
+        tablaPaginas = malloc(tamTablaPaginas * sizeof(int));
+        tlb = malloc(tamTlb * sizeof(struct estructuraTLB));
+        memoriaFisica = malloc(tamTablaPaginas * tamPagina * sizeof(int));
+
+        for (int i = 0; i < tamTablaPaginas; i++) {
+            tablaPaginas[i] = -1;
         }
-        direccionFisica = (paginaFisica << k) | offset;
-        valor = memoriaFisica[paginaFisica * tamPagina + offset];
-        printf("Direccion Logica: %d, Direccion Fisica: %d, Valor: %d\n", direccionLogica, direccionFisica, valor);
+
+        for(int i = 0; i < k; i++){
+            mascaraOffset |= 1 << i;
+        }
+
+        for(int i = 0; i < m; i++){
+            mascaraDireccion |= 1 << i;
+        }
+
+        char dir[256];
+        while (fgets(dir, 256, direcciones)) {
+            totalDirecciones++;
+            direccionLogica = atoi(dir);
+            offset = direccionLogica & mascaraOffset;
+            paginaLogica = (direccionLogica >> k) & mascaraDireccion;
+            
+            paginaFisica = buscaEnTlb(paginaLogica);
+
+            if(paginaFisica == -1){
+                paginaFisica = tablaPaginas[paginaLogica];
+                
+                if (paginaFisica == -1) {
+                    fallosDePagina++;
+                    
+                    paginaFisica = paginaLibre;
+                    paginaLibre++;
+                    falloDePagina(argv[2], paginaFisica, paginaLogica, offset);
+                }
+                
+                meteEnTlb(paginaLogica, paginaFisica);
+            } else {
+                tlbHits++;
+            }
+            direccionFisica = (paginaFisica << k) | offset;
+            valor = memoriaFisica[paginaFisica * tamPagina + offset];
+            printf("Direccion Logica: %d, Direccion Fisica: %d, Valor: %d\n", direccionLogica, direccionFisica, valor);
+        }
+
+        printf("Número de direcciones traducidas: %d\n", totalDirecciones);
+        printf("Fallos de página: %d\n", fallosDePagina);
+        printf("Índice de fallos de página: %f\n", fallosDePagina / (1. * totalDirecciones));
+        printf("TLB hits: %d\n", tlbHits);
+        printf("Índice de TLB hit: %f\n", tlbHits / (1. * totalDirecciones));
+        
+        free(tablaPaginas);
+        free(tlb);
+
+        fclose(direcciones);
+    } else {
+        printf("No se pudo abrir %s\n", argv[1]);
     }
-
-    printf("Número de direcciones traducidas: %d\n", totalDirecciones);
-    printf("Fallos de página: %d\n", fallosDePagina);
-    printf("Índice de fallos de página: %f\n", fallosDePagina / (1. * totalDirecciones));
-    printf("TLB hits: %d\n", tlbHits);
-    printf("Índice de TLB hit: %f\n", tlbHits / (1. * totalDirecciones));
-    
-    free(tablaPaginas);
-    free(tlb);
-
-    fclose(direcciones);
 }
