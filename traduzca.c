@@ -41,7 +41,6 @@ void falloDePagina(const char *nArchivo, int paginaFisica, int paginaLogica, int
     unsigned char dato[256];
     fread(dato,sizeof(dato),1,archivo);
 
-    //printf("%d\n", dato[offset]);
     for(int i = 0; i < 256; i++){
         memoriaFisica[paginaFisica*tamPagina+i] = dato[i];
     }
@@ -105,7 +104,8 @@ int main(int argc, const char *argv[]){
     int fallosDePagina = 0;
     int paginaLibre = 0;
 
-    int mascara = 0;
+    int mascaraOffset = 0;
+    int mascaraDireccion = 0;
 
     tamPagina = (int)pow(2,k);
     tamTablaPaginas = pow(2,m);
@@ -119,7 +119,11 @@ int main(int argc, const char *argv[]){
     }
 
     for(int i = 0; i < k; i++){
-        mascara |= 1 << i;
+        mascaraOffset |= 1 << i;
+    }
+
+    for(int i = 0; i < m; i++){
+        mascaraDireccion |= 1 << i;
     }
 
     FILE* direcciones = fopen(argv[1], "rb");
@@ -128,8 +132,8 @@ int main(int argc, const char *argv[]){
     while (fgets(dir, 256, direcciones)) {
         totalDirecciones++;
         direccionLogica = atoi(dir);
-        offset = direccionLogica & mascara;
-        paginaLogica = (direccionLogica >> k) & mascara;
+        offset = direccionLogica & mascaraOffset;
+        paginaLogica = (direccionLogica >> k) & mascaraDireccion;
         
         paginaFisica = buscaEnTlb(paginaLogica);
 
